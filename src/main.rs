@@ -2,11 +2,15 @@
 
 // region:    --- Modules
 
+mod config;
 mod ctx;
 mod error;
 mod log;
 mod model;
 mod web;
+
+// #[cfg(test)]
+pub mod _dev_utils;
 
 pub use self::error::{Error, Result};
 

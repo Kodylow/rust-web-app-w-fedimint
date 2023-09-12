@@ -1,2 +1,5 @@
 [env]
 RUST_LOG = "debug"
+
+## -- ConfigMap
+SERVICE_WEB_FOLDER = "web-folder/" # this is relative to cargo.toml, in deployed images use absolute path
