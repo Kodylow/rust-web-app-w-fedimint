@@ -1,13 +1,137 @@
 <!DOCTYPE html>
 <html>
-  
-<head>
-  <meta charset="utf-8">
-  <title>AWESOME-APP Web</title>
-</head>
+  <head>
+    <meta charset="utf-8" />
+    <title>AWESOME-APP Web</title>
+    <script>
+      let token = null;
 
-<body>
-  Hello <strong>World!</strong>
-</body>
+      async function signup() {
+        const username = document.getElementById("signupUsername").value;
+        const password = document.getElementById("signupPassword").value;
 
+        const response = await fetch("/api/signup", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ username, pwd: password }),
+        });
+
+        const data = await response.json();
+        if (data.result.success) {
+          alert("Signed up successfully");
+        } else {
+          alert("Failed to signup");
+        }
+      }
+
+      async function login() {
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+
+        const response = await fetch("/api/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ username, pwd: password }),
+        });
+
+        const data = await response.json();
+        if (data.result.success) {
+          token = data.result.token;
+          alert("Logged in successfully");
+        } else {
+          alert("Failed to login");
+        }
+      }
+
+      async function logout() {
+        const response = await fetch("/api/logoff", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ logoff: true }),
+        });
+
+        const data = await response.json();
+        if (data.result.logged_off) {
+          token = null;
+          alert("Logged out successfully");
+        } else {
+          alert("Failed to logout");
+        }
+      }
+
+      async function addTask() {
+        const title = document.getElementById("taskTitle").value;
+
+        const response = await fetch("/api/rpc", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            method: "create_task",
+            params: { data: { title } },
+          }),
+        });
+
+        const data = await response.json();
+        if (data.result) {
+          alert("Task added successfully");
+        } else {
+          alert("Failed to add task");
+        }
+      }
+
+      async function removeTask() {
+        const id = document.getElementById("taskId").value;
+
+        const response = await fetch("/api/rpc", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ method: "delete_task", params: { id } }),
+        });
+
+        const data = await response.json();
+        if (data.result) {
+          alert("Task removed successfully");
+        } else {
+          alert("Failed to remove task");
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <h1>AWESOME-APP Web</h1>
+
+    <h2>Signup</h2>
+    <input id="signupUsername" placeholder="Username" />
+    <input id="signupPassword" placeholder="Password" type="password" />
+    <button onclick="signup()">Signup</button>
+
+    <h2>Login</h2>
+    <input id="username" placeholder="Username" />
+    <input id="password" placeholder="Password" type="password" />
+    <button onclick="login()">Login</button>
+
+    <h2>Logout</h2>
+    <button onclick="logout()">Logout</button>
+
+    <h2>Add Task</h2>
+    <input id="taskTitle" placeholder="Task Title" />
+    <button onclick="addTask()">Add Task</button>
+
+    <h2>Remove Task</h2>
+    <input id="taskId" placeholder="Task ID" />
+    <button onclick="removeTask()">Remove Task</button>
+  </body>
 </html>

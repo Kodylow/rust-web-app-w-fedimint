@@ -14,6 +14,9 @@ pub enum Error {
 	RpcMissingParams { rpc_method: String },
 	RpcFailJsonParams { rpc_method: String },
 
+	// -- Signup
+	SignupFailUsernameAlreadyExists { username: String },
+
 	// -- Login
 	LoginFailUsernameNotFound,
 	LoginFailUserHasNoPwd { user_id: i64 },

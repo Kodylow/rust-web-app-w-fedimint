@@ -16,7 +16,7 @@ pub struct User {
 	pub username: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, FromRow, Fields)]
 pub struct UserForCreate {
 	pub username: String,
 	pub pwd_clear: String,
@@ -24,7 +24,9 @@ pub struct UserForCreate {
 
 #[derive(Fields)]
 pub struct UserForInsert {
-	pub username: String,
+	username: String,
+	pwd: String,
+	pwd_salt: Uuid,
 }
 
 #[derive(Clone, FromRow, Fields, Debug)]
@@ -51,6 +53,7 @@ pub struct UserForAuth {
 pub trait UserBy: HasFields + for<'r> FromRow<'r, PgRow> + Unpin + Send {}
 
 impl UserBy for User {}
+impl UserBy for UserForCreate {}
 impl UserBy for UserForLogin {}
 impl UserBy for UserForAuth {}
 
@@ -63,6 +66,35 @@ impl DbBmc for UserBmc {
 }
 
 impl UserBmc {
+	pub async fn create<E>(
+		ctx: &Ctx,
+		mm: &ModelManager,
+		username: &str,
+		pwd_clear: &str,
+	) -> Result<i64>
+	where
+		E: UserBy,
+	{
+		let db = mm.db();
+
+		let pwd_salt = Uuid::new_v4();
+
+		let pwd = pwd::encrypt_pwd(&EncryptContent {
+			content: pwd_clear.to_string(),
+			salt: pwd_salt.to_string(),
+		})?;
+
+		base::create::<Self, _>(
+			ctx,
+			mm,
+			UserForInsert {
+				username: username.to_string(),
+				pwd,
+				pwd_salt,
+			},
+		)
+		.await
+	}
 	pub async fn get<E>(ctx: &Ctx, mm: &ModelManager, id: i64) -> Result<E>
 	where
 		E: UserBy,
@@ -124,16 +156,16 @@ mod tests {
 
 	#[serial]
 	#[tokio::test]
-	async fn test_first_ok_demo1() -> Result<()> {
+	async fn test_first_ok_demo() -> Result<()> {
 		// -- Setup & Fixtures
 		let mm = _dev_utils::init_test().await;
 		let ctx = Ctx::root_ctx();
-		let fx_username = "demo1";
+		let fx_username = "demo";
 
 		// -- Exec
 		let user: User = UserBmc::first_by_username(&ctx, &mm, fx_username)
 			.await?
-			.context("Should have user 'demo1'")?;
+			.context("Should have user 'demo'")?;
 
 		// -- Check
 		assert_eq!(user.username, fx_username);
