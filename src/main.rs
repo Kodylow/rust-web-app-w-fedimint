@@ -3,10 +3,12 @@
 // region:    --- Modules
 
 mod config;
+mod crypt;
 mod ctx;
 mod error;
 mod log;
 mod model;
+mod utils;
 mod web;
 
 // #[cfg(test)]
@@ -33,6 +35,9 @@ async fn main() -> Result<()> {
 		.with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
 		.init();
 
+	// -- FOR DEV ONLY
+	_dev_utils::init_dev().await;
+
 	// Initialize ModelManager.
 	let mm = ModelManager::new().await?;
 
@@ -41,7 +46,7 @@ async fn main() -> Result<()> {
 	//   .route_layer(middleware::from_fn(mw_ctx_require));
 
 	let routes_all = Router::new()
-		.merge(routes_login::routes())
+		.merge(routes_login::routes(mm.clone()))
 		// .nest("/api", routes_rpc)
 		.layer(middleware::map_response(mw_reponse_map))
 		.layer(middleware::from_fn_with_state(mm.clone(), mw_ctx_resolve))
